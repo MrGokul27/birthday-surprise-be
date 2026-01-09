@@ -4,8 +4,10 @@ const BirthdaySchema = new mongoose.Schema({
     name: String,
     age: Number,
     gender: String,
+    relationship: String,
     dob: String,
     email: String,
+    contact: String,
     photos: [String],
     user: {
         type: mongoose.Schema.Types.ObjectId,
