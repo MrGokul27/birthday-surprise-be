@@ -20,4 +20,18 @@ router.get("/me", protect, async (req: any, res) => {
     });
 });
 
+router.get("/userDetails", protect, async (req: any, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+
+        const users = await User.find({}, "name email role").sort({ name: 1 });
+
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 export default router;
