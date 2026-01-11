@@ -45,7 +45,6 @@ router.put("/:id", protect, async (req: any, res) => {
             return res.status(404).json({ message: "Birthday not found" });
         }
 
-        // Ownership check
         if (
             req.user.role !== "admin" &&
             birthday.user.toString() !== req.user.id
@@ -74,7 +73,6 @@ router.delete("/:id", protect, async (req: any, res) => {
             return res.status(404).json({ message: "Birthday not found" });
         }
 
-        // Ownership check
         if (
             req.user.role !== "admin" &&
             birthday.user.toString() !== req.user.id
@@ -83,25 +81,21 @@ router.delete("/:id", protect, async (req: any, res) => {
         }
 
         await birthday.deleteOne();
-
         res.json({ message: "Birthday deleted successfully" });
     } catch {
         res.status(500).json({ message: "Server Error" });
     }
 });
 
-/* ✍️ UPDATE BIRTHDAY WISH */
+/* ✍️ UPDATE WISH */
 router.patch("/:id/wish", protect, async (req: any, res) => {
     try {
-        const { wish } = req.body;
-
         const birthday = await Birthday.findById(req.params.id);
 
         if (!birthday) {
             return res.status(404).json({ message: "Birthday not found" });
         }
 
-        // Ownership check
         if (
             req.user.role !== "admin" &&
             birthday.user.toString() !== req.user.id
@@ -109,20 +103,19 @@ router.patch("/:id/wish", protect, async (req: any, res) => {
             return res.status(403).json({ message: "Not authorized" });
         }
 
-        birthday.wish = wish;
+        birthday.wish = req.body.wish;
         await birthday.save();
-
         res.json(birthday);
     } catch {
         res.status(500).json({ message: "Server Error" });
     }
 });
 
-/* 📸 UPLOAD IMAGE */
+/* 📸 UPLOAD MULTIPLE IMAGES */
 router.patch(
-    "/:id/image",
+    "/:id/images",
     protect,
-    upload.single("image"),
+    upload.array("images", 5),
     async (req: any, res) => {
         try {
             const birthday = await Birthday.findById(req.params.id);
@@ -138,29 +131,39 @@ router.patch(
                 return res.status(403).json({ message: "Not authorized" });
             }
 
-            birthday.image = {
-                data: req.file.buffer,
-                contentType: req.file.mimetype,
-            };
+            const files = req.files as Express.Multer.File[];
+
+            files.forEach((file) => {
+                birthday.photos.push({
+                    data: file.buffer,
+                    contentType: file.mimetype,
+                });
+            });
 
             await birthday.save();
-            res.json({ message: "Image uploaded successfully" });
+            res.json(birthday);
         } catch {
             res.status(500).json({ message: "Server Error" });
         }
     }
 );
 
-/* 📸 GET IMAGE */
-router.get("/:id/image", async (req, res) => {
+/* 🖼 GET IMAGE BY INDEX */
+router.get("/:id/image/:index", async (req, res) => {
     const birthday = await Birthday.findById(req.params.id);
 
-    if (!birthday || !birthday.image?.data) {
+    if (!birthday) {
+        return res.status(404).json({ message: "Birthday not found" });
+    }
+
+    const photo = birthday.photos?.[Number(req.params.index)];
+
+    if (!photo) {
         return res.status(404).json({ message: "Image not found" });
     }
 
-    res.set("Content-Type", birthday.image.contentType || "image/jpeg");
-    res.send(birthday.image.data);
+    res.set("Content-Type", photo.contentType || "image/jpeg");
+    res.send(photo.data);
 });
 
 export default router;
