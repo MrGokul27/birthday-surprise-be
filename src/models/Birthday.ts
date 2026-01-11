@@ -8,7 +8,14 @@ const BirthdaySchema = new mongoose.Schema({
     dob: String,
     email: String,
     contact: String,
-    photos: [String],
+    image: {
+        data: Buffer,
+        contentType: String,
+    },
+    wish: {
+        type: String,
+        default: "",
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -16,7 +23,7 @@ const BirthdaySchema = new mongoose.Schema({
     },
     createdBy_name: String,
     createdBy_email: String,
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.model("Birthday", BirthdaySchema);
